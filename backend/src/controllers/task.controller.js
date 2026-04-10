@@ -1,6 +1,6 @@
 const Task = require('../models/task.model');
+const StudentTask = require('../models/studentTask.model')
 const Student = require('../models/student.model')
-
 
 const getAllTasks = async (req, res) => {
     try {
@@ -16,58 +16,38 @@ const getAllTasks = async (req, res) => {
 }
 
 
-const createTask = async (req,res)=>{
-    try{
-        const {title,description} = req.body
-        if(!title || !description){
-            return res.status(400).json({message:"All fields are required"})
-        }
-        const newTask = new Task({
-            title,
-            description
-        })
-        await newTask.save()
-        res.status(201).json({message:"Task created successfully",task:newTask})
-    }catch(err){
-        console.log(err)
-        res.status(500).json({message:"Internal server error"})
-    }
-}
-
-const createAndAssingedTask = async (req, res) => {
+const createTask = async (req, res) => {
     try {
-        const { title, description, assignedTo, dueDate } = req.body;
-        if (!title || !description || !assignedTo || !dueDate) {
-            return res.status(400).json({ message: "All fields are required" })
+        const { title, description, dueDate } = req.body
+
+        // validate required fields
+        if (!title) {
+            return res.status(400).json({ message: "Title is required" })
         }
-        const student = await Student.findById(assignedTo);
-        if (!student) {
-            return res.status(404).json({ message: "Student not found" })
+        if (!dueDate) {
+            return res.status(400).json({ message: "Due date is required" })
         }
-        const newTask = new Task({
+
+        // check duplicate task title
+        const taskExists = await Task.findOne({ title })
+        if (taskExists) {
+            return res.status(400).json({ message: "Task with this title already exists" })
+        }
+
+        const task = new Task({
             title,
             description,
-            assignedTo: student._id,
             dueDate
         })
-        await newTask.save();
+        await task.save()
 
-        const assignedStudent = await Student.findByIdAndUpdate(
-            student._id,
-            { $push: { tasks: newTask._id } },
-            { new: true })
-
-        if (!assignedStudent) {
-            await Task.findByIdAndDelete(newTask._id)
-            return res.status(500).json({ message: "Failed to assign task to student" })
-        }
         res.status(201).json({
-            message: "task assignd successfully",
-            task: newTask,
-            studentTasks: assignedStudent.tasks
-        });
+            message: "Task created successfully",
+            task
+        })
+
     } catch (err) {
-        console.log(err)
+        console.error(err)
         res.status(500).json({ message: "Internal server error" })
     }
 }
@@ -75,19 +55,62 @@ const createAndAssingedTask = async (req, res) => {
 const updateTask = async (req, res) => {
     try {
         const { id } = req.params
-        const { title, description, assignedTo, dueDate } = req.body
+        const { title, description, dueDate } = req.body
+
         const task = await Task.findById(id)
         if (!task) {
             return res.status(404).json({ message: "Task not found" })
         }
+
+        
+        if (title && title !== task.title) {
+            const titleExists = await Task.findOne({ title, _id: { $ne: id } })
+            if (titleExists) {
+                return res.status(400).json({ message: "Task with this title already exists" })
+            }
+        }
+
+        // update fields if provided
         if (title) task.title = title
         if (description) task.description = description
-        if (assignedTo) task.assignedTo = assignedTo
         if (dueDate) task.dueDate = dueDate
+
+        task.updatedAt = Date.now()
         await task.save()
-        res.status(200).json({ message: "Task updated successfully", task })
+
+        res.status(200).json({
+            message: "Task updated successfully",
+            task
+        })
+
     } catch (err) {
-        console.log(err)
+        console.error(err)
+        res.status(500).json({ message: "Internal server error" })
+    }
+}
+
+
+const updateTaskStatus = async (req, res) => {
+    try {
+        const { taskId, studentId } = req.body
+
+        const studentTask = await StudentTask.findOne({ taskId, studentId })
+        if (!studentTask) {
+            return res.status(404).json({ message: "Assignment not found" })
+        }
+
+        
+        studentTask.isCompleted = !studentTask.isCompleted
+        studentTask.completedAt = studentTask.isCompleted ? new Date() : null
+        await studentTask.save()
+
+        res.status(200).json({
+            message: `Task marked as ${studentTask.isCompleted ? 'completed' : 'pending'}`,
+            studentTask
+        })
+
+    } catch (err) {
+        console.error(err)
         res.status(500).json({ message: "Internal server error" })
     }
 }
@@ -110,22 +133,104 @@ const deleteTask = async (req, res) => {
     }
 }
 
-const updateTaskStatus = async (req, res) => {
+
+const assignTask = async (req, res) => {
     try {
-        const { id } = req.params
-        const { status } = req.body
-        const task = await Task.findById(id)
+        const { taskId, studentIds } = req.body
+        
+
+        
+        if (!taskId) {
+            return res.status(400).json({ message: "taskId is required" })
+        }
+        if (!studentIds || studentIds.length === 0) {
+            return res.status(400).json({ message: "At least one studentId is required" })
+        }
+
+        // step 1 — check task exists
+        const task = await Task.findById(taskId)
         if (!task) {
             return res.status(404).json({ message: "Task not found" })
         }
-        task.status = status
-        await task.save()
-        res.status(200).json({ message: "Task status updated successfully", task })
+
+        // step 2 — check all students exist
+        const students = await Student.find({ _id: { $in: studentIds } })
+        if (students.length !== studentIds.length) {
+            return res.status(404).json({ message: "One or more students not found" })
+        }
+
+        // step 3 — check if task already assigned to any of these students
+        const alreadyAssigned = await StudentTask.find({
+            taskId,
+            studentId: { $in: studentIds }
+        }).populate('studentId', 'name')
+
+        if (alreadyAssigned.length > 0) {
+            const names = alreadyAssigned.map(st => st.studentId.name).join(', ')
+            return res.status(400).json({
+                message: `Task already assigned to: ${names}`
+            })
+        }
+
+        // step 4 — create StudentTask records for each student
+        const studentTasks = studentIds.map(studentId => ({
+            taskId,
+            studentId,
+            isCompleted: false
+        }))
+
+        await StudentTask.insertMany(studentTasks)
+
+        res.status(201).json({
+            message: "Task assigned successfully",
+            task: {
+                id: task._id,
+                title: task.title,
+                dueDate: task.dueDate
+            },
+            assignedTo: students.map(s => ({
+                id: s._id,
+                name: s.name,
+                classNumber: s.classNumber
+            }))
+        })
+
     } catch (err) {
-        console.log(err)
+        console.error(err)
+        res.status(500).json({ message: "Internal server error" })
+    }
+}
+
+const getTasksByStudent = async (req, res) => {
+    try {
+        const { studentId } = req.params
+
+        const studentTasks = await StudentTask.find({ studentId })
+            .populate('taskId', 'title description dueDate')
+
+        res.status(200).json({ tasks: studentTasks })
+
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Internal server error" })
+    }
+}
+
+const getStudentsByTask = async (req, res) => {
+    try {
+        const { taskId } = req.params
+
+        const studentTasks = await StudentTask.find({ taskId })
+            .populate('studentId', 'name classNumber roll')  // get student details
+
+        res.status(200).json({ students: studentTasks })
+
+    } catch (err) {
+        console.error(err)
         res.status(500).json({ message: "Internal server error" })
     }
 }
 
 
-module.exports = { getAllTasks,createTask, createAndAssingedTask, deleteTask, updateTaskStatus, updateTask }
+
+module.exports = { getAllTasks, createTask, deleteTask, updateTaskStatus, assignTask, updateTask, getStudentsByTask, getTasksByStudent }

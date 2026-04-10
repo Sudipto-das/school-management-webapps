@@ -31,11 +31,7 @@ const studentSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-    },
-    tasks: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Task"
-    }]
+    }
 })
 studentSchema.index({ roll: 1, classNumber: 1 }, { unique: true })
 

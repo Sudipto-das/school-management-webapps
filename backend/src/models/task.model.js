@@ -9,18 +9,12 @@ const taskSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Student',
-    required: true,
-  },
-  dueDate: {
+  dueDate:{
     type: Date,
-    required: true,
   },
-  status: {
-   type:Boolean,
-   default: false,
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'         
   },
   createdAt: {
     type: Date,
