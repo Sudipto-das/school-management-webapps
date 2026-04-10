@@ -9,10 +9,18 @@ const taskSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Student',
+    required: true,
+  },
+  dueDate: {
+    type: Date,
+    required: true,
+  },
   status: {
-    type: String,
-    enum: ['To Do', 'In Progress', 'Done'],
-    default: 'To Do',
+   type:Boolean,
+   default: false,
   },
   createdAt: {
     type: Date,

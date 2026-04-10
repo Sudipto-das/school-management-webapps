@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 
-const userSchema = new mongoose.Schema({
+const studentSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
@@ -11,12 +11,10 @@ const userSchema = new mongoose.Schema({
     roll: {
         type: Number,
         required: true,
-        unique: true
     },
     classNumber: {
         type: Number,
         required: true,
-        unique: true
     },
     guirdenName: {
         type: String,
@@ -33,16 +31,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        trim: true,
-        minlength: 3
     },
-    taskId: [{
+    tasks: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Task"
     }]
 })
+studentSchema.index({ roll: 1, classNumber: 1 }, { unique: true })
 
-
-const Student = mongoose.model('Student', userSchema);
+const Student = mongoose.model('Student', studentSchema);
 
 module.exports = Student;

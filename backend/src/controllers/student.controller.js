@@ -1,8 +1,8 @@
 const Student = require('../models/student.model')
-
+const Task = require('../models/task.model')
 const createStudent = async (req, res) => {
     try {
-        const { name, email, phone, roll, guirdenName,guirdenPhoneNumber, classNumber } = req.body
+        const { name, email, phone, roll, guirdenName, guirdenPhoneNumber, classNumber } = req.body
         const rollExists = await Student.findOne({ roll, classNumber })
         if (rollExists) {
             return res.status(400).json({ message: `Roll number ${roll} already taken in class ${classNumber}` })
@@ -52,7 +52,7 @@ const getAllStudents = async (req, res) => {
 const updateStudent = async (req, res) => {
     try {
         const studentId = req.params.id
-        const { name, email, phone, roll, guirdenName,guirdenPhoneNumber, classNumber } = req.body
+        const { name, email, phone, roll, guirdenName, guirdenPhoneNumber, classNumber } = req.body
         const student = await Student.findByIdAndUpdate(studentId, {
             name,
             email,
@@ -87,4 +87,28 @@ const deleteStudent = async (req, res) => {
     }
 }
 
-module.exports = { createStudent, getStudentById, getAllStudents, updateStudent, deleteStudent }
+const assignTaskToStudent = async (req, res) => {
+    try {
+        const { studentId, taskId, dueDate } = req.body
+        if (!dueDate) {
+            return res.status(400).json({ message: "Due date is required" })
+        }
+        const student = await Student.findById(studentId)
+        if (!student) {
+            return res.status(404).json({ message: "Student not found" })
+        }
+        const task = await Task.findById(taskId)
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" })
+        }
+        student.tasks.push(taskId)
+        await student.save()
+        await Task.findByIdAndUpdate(taskId, { dueDate: dueDate, studentId: studentId })
+        res.status(200).json({ message: "Task assigned successfully" })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({ message: "Server error" })
+    }
+}
+
+module.exports = { createStudent, getStudentById, getAllStudents, updateStudent, deleteStudent,assignTaskToStudent }
