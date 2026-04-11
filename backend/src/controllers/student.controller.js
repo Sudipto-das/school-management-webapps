@@ -17,7 +17,7 @@ const createStudent = async (req, res) => {
             classNumber
         })
         await newStudent.save()
-        res.status(201).json({ message: "Student created successfully" })
+        res.status(201).json(newStudent)
     } catch (err) {
         console.log(err)
         throw err
@@ -63,9 +63,9 @@ const updateStudent = async (req, res) => {
             classNumber
         }, { new: true })
         if (!student) {
-            return res.status(404).json({ message: "Student not found" })
+            return res.status(404).json({ message: "Student not found", })
         }
-        res.status(200).json({ message: "Student updated successfully" })
+        res.status(200).json(student)
     } catch (err) {
         console.log(err)
         res.status(500).json({ message: "Server error" })
