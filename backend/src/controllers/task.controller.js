@@ -137,9 +137,7 @@ const deleteTask = async (req, res) => {
 const assignTask = async (req, res) => {
     try {
         const { taskId, studentIds } = req.body
-        
-
-        
+          
         if (!taskId) {
             return res.status(400).json({ message: "taskId is required" })
         }
@@ -147,19 +145,19 @@ const assignTask = async (req, res) => {
             return res.status(400).json({ message: "At least one studentId is required" })
         }
 
-        // step 1 — check task exists
+        // check task exists
         const task = await Task.findById(taskId)
         if (!task) {
             return res.status(404).json({ message: "Task not found" })
         }
 
-        // step 2 — check all students exist
+        // check all students exist
         const students = await Student.find({ _id: { $in: studentIds } })
         if (students.length !== studentIds.length) {
             return res.status(404).json({ message: "One or more students not found" })
         }
 
-        // step 3 — check if task already assigned to any of these students
+        // check if task already assigned to any of these students
         const alreadyAssigned = await StudentTask.find({
             taskId,
             studentId: { $in: studentIds }
@@ -172,7 +170,7 @@ const assignTask = async (req, res) => {
             })
         }
 
-        // step 4 — create StudentTask records for each student
+        // create StudentTask records for each student
         const studentTasks = studentIds.map(studentId => ({
             taskId,
             studentId,
@@ -221,7 +219,7 @@ const getStudentsByTask = async (req, res) => {
         const { taskId } = req.params
 
         const studentTasks = await StudentTask.find({ taskId })
-            .populate('studentId', 'name classNumber roll')  // get student details
+            .populate('studentId', 'name classNumber roll')  
 
         res.status(200).json({ students: studentTasks })
 
