@@ -4,6 +4,7 @@ const app = express();
 const authRouter = require('./routes/auth.routes')
 const studentRouter = require('./routes/student.routes')
 const taskRouter = require('./routes/task.routes')
+const dashboardRouter = require('./routes/dashboard.routes')
 const cookieParser = require('cookie-parser')
 app.use(express.json());
 const corsOptions = {
@@ -21,6 +22,7 @@ app.use(cookieParser())
 app.use('/api/auth', authRouter)
 app.use('/api/student', studentRouter)
 app.use('/api/task', taskRouter)
+app.use('/api/dashboard', dashboardRouter)
 
 
 module.exports = app;
