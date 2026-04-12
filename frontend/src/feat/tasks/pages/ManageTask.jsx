@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import { useTask } from "../hooks/useTask";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 const ManageTask = () => {
     const { id } = useParams();
     const { handleGetStudentsByTask, handleUpdateStudentTaskStatus, taskDetails, loading } = useTask()

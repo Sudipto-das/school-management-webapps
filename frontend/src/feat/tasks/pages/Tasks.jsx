@@ -97,7 +97,7 @@ const Tasks = () => {
               {/* Table Body */}
               <tbody className="divide-y divide-gray-200" >
                 {filteredTasks.map((task) => (
-                  <tr key={task._id} className="hover:bg-gray-50"
+                  <tr key={task._id} className="hover:bg-gray-50 cursor-pointer"
                     onClick={() => handleClickOnBody(task._id)}>
                     {/* Title */}
                     <td className="px-6 py-4 font-medium text-gray-800">

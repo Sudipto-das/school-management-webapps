@@ -8,6 +8,7 @@ export const TaskProvider = ({ children }) => {
     const [tasks, setTasks] = useState([])
     const [taskDetails, setTaskDetails] = useState([])
     const [loading, setLoading] = useState(false)
+    
     const [error, setError] = useState(null)
 
 
@@ -83,10 +84,10 @@ export const TaskProvider = ({ children }) => {
         }
     }
     const handleUpdateStudentTaskStatus = async (studentTaskId, taskId) => {
-        setLoading(true)
+        
         try {
             const response = await updateStudentTaskStatus(studentTaskId, taskId)
-            
+
             setTaskDetails(prev =>
                 prev.map(task =>
                     task.studentId._id === studentTaskId
@@ -96,14 +97,12 @@ export const TaskProvider = ({ children }) => {
             )
         } catch (error) {
             setError(error.response?.data?.message || error.message)
-        } finally {
-            setLoading(false)
-        }
+        } 
     }
 
 
     return (
-        <TaskContext.Provider value={{ tasks, taskDetails, loading, error, fetchTasks, handleCreateTask, handleUpdateTask, handleDeleteTask, handleAssignTask, handleGetStudentsByTask, handleUpdateStudentTaskStatus }}>
+        <TaskContext.Provider value={{ tasks, taskDetails, loading,  error, fetchTasks, handleCreateTask, handleUpdateTask, handleDeleteTask, handleAssignTask, handleGetStudentsByTask, handleUpdateStudentTaskStatus }}>
             {children}
         </TaskContext.Provider>
     )
