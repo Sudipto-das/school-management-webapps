@@ -7,7 +7,7 @@ import Tasks from "./feat/tasks/pages/Tasks";
 import PrivateRoute from "./protect-route/PrivateRoute";
 import PublicRoute from "./protect-route/PublicRoute";
 import Layout from "./components/Layout/Layout";
-
+import ManageTask from "./feat/tasks/pages/ManageTask";
 export const router = createBrowserRouter([
     {
         path: "/register",
@@ -28,5 +28,9 @@ export const router = createBrowserRouter([
     {
         path: '/tasks',
         element: <PrivateRoute><Layout><Tasks /></Layout></PrivateRoute>
+    },
+    {
+        path: '/manage-task/:id',
+        element: <PrivateRoute><Layout><ManageTask /></Layout></PrivateRoute>
     }
 ])
